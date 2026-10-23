@@ -1,0 +1,237 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tricept">
+
+  <!-- 1. MATERIALES VISUALES -->
+  <material name="yellow"><color rgba="0.8 0.8 0.0 1.0"/></material>
+  <material name="grey"><color rgba="0.5 0.5 0.5 1.0"/></material>
+  <material name="blue"><color rgba="0.1 0.3 0.8 1.0"/></material>
+  <material name="green"><color rgba="0.1 0.8 0.3 1.0"/></material>
+
+  <!-- 2. ANCLAJE FIJO AL MUNDO -->
+  <link name="world"/>
+
+  <joint name="world_to_base" type="fixed">
+    <parent link="world"/>
+    <child link="base_platform"/>
+    <origin xyz="0 0 1.8" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 3. BASE FIJA (Base Platform) -->
+  <link name="base_platform">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.05" radius="0.45"/> 
+      </geometry>
+      <material name="yellow"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.05" radius="0.45"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="10.0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.5" ixy="0.0" ixz="0.0" iyy="0.5" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <!-- 4. TUBO CENTRAL TELESCÓPICO -->
+  <link name="center_tube">
+    <visual>
+      <origin xyz="0 0 -0.516" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="1.032" radius="0.08"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.516" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="1.032" radius="0.08"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="5.0"/>
+      <origin xyz="0 0 -0.516" rpy="0 0 0"/>
+      <inertia ixx="0.44" ixy="0.0" ixz="0.0" iyy="0.44" iyz="0.0" izz="0.016"/>
+    </inertial>
+  </link>
+
+  <joint name="base_to_center_tube" type="prismatic">
+    <parent link="base_platform"/>
+    <child link="center_tube"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="-0.2" upper="0.5" effort="5000.0" velocity="1.0"/>
+    <!-- Amortiguación para evitar inestabilidad en Gazebo -->
+    <dynamics damping="50.0" friction="10.0"/>
+  </joint>
+
+  <!-- 5. PLATAFORMA MÓVIL (Moving Platform) -->
+  <link name="moving_platform">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.05" radius="0.15"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.05" radius="0.15"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="3.0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.017" ixy="0.0" ixz="0.0" iyy="0.017" iyz="0.0" izz="0.033"/>
+    </inertial>
+  </link>
+
+  <joint name="center_tube_to_platform" type="fixed">
+    <parent link="center_tube"/>
+    <child link="moving_platform"/>
+    <origin xyz="0 0 -1.032" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 6. RÓTULAS SUPERIORES -->
+  <link name="upper_cardan_1">
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+  </link>
+  <joint name="base_to_cardan_1" type="fixed">
+    <parent link="base_platform"/>
+    <child link="upper_cardan_1"/>
+    <origin xyz="-0.3000 -0.1732 0.0" rpy="0.0 -0.25 2.617"/> 
+  </joint>
+
+  <link name="upper_cardan_2">
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+  </link>
+  <joint name="base_to_cardan_2" type="fixed">
+    <parent link="base_platform"/>
+    <child link="upper_cardan_2"/>
+    <origin xyz="0.0000 0.3464 0.0" rpy="0.25 0.0 0.0"/>
+  </joint>
+
+  <link name="upper_cardan_3">
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+  </link>
+  <joint name="base_to_cardan_3" type="fixed">
+    <parent link="base_platform"/>
+    <child link="upper_cardan_3"/>
+    <origin xyz="0.3000 -0.1732 0.0" rpy="0.0 -0.25 -2.617"/>
+  </joint>
+
+  <!-- 7. MACRO PARA ACTUADORES LINEALES -->
+  <xacro:macro name="tricept_actuator" params="suffix parent_link">
+    <link name="strut_${suffix}_upper">
+      <visual>
+        <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.6" radius="0.04"/>
+        </geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.6" radius="0.04"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="2.0"/>
+        <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+        <inertia ixx="0.06" ixy="0.0" ixz="0.0" iyy="0.06" iyz="0.0" izz="0.0016"/>
+      </inertial>
+    </link>
+
+    <joint name="cardan_to_strut_${suffix}" type="continuous">
+      <parent link="${parent_link}"/>
+      <child link="strut_${suffix}_upper"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <!-- Amortiguación -->
+      <dynamics damping="10.0" friction="1.0"/>
+    </joint>
+
+    <link name="strut_${suffix}_lower">
+      <visual>
+        <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.6" radius="0.025"/>
+        </geometry>
+        <material name="blue"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.6" radius="0.025"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="1.0"/>
+        <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+        <inertia ixx="0.03" ixy="0.0" ixz="0.0" iyy="0.03" iyz="0.0" izz="0.0003"/>
+      </inertial>
+    </link>
+
+    <joint name="piston_joint_${suffix}" type="prismatic">
+      <parent link="strut_${suffix}_upper"/>
+      <child link="strut_${suffix}_lower"/>
+      <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="0.1" upper="0.6" effort="1000.0" velocity="1.0"/>
+      <!-- Amortiguación -->
+      <dynamics damping="20.0" friction="2.0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:tricept_actuator suffix="1" parent_link="upper_cardan_1"/>
+  <xacro:tricept_actuator suffix="2" parent_link="upper_cardan_2"/>
+  <xacro:tricept_actuator suffix="3" parent_link="upper_cardan_3"/>
+
+<!-- ===================================================================== -->
+  <!-- 8. CONFIGURACIÓN DE MOTORES (ros2_control para Gazebo Harmonic)       -->
+  <!-- ===================================================================== -->
+  <ros2_control name="GazeboSystem" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+    
+    <joint name="base_to_center_tube">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="piston_joint_1">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="piston_joint_2">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="piston_joint_3">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+  </ros2_control>
+
+  <gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find tricept_description)/config/controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+</robot>
